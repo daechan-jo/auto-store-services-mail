@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import {CronType} from "@daechanjo/models";
+import {CoupangPagingProduct, CronType, OnchWithCoupangProduct} from "@daechanjo/models";
 
 
 @Injectable()
@@ -23,22 +23,23 @@ export class MailService {
       },
     });
     this.adminEmails = [
-      this.configService.get<string>('ADMIN_EMAIL_1')!,
+      this.configService.get<string>('ADMIN_EMAIL')!,
       this.configService.get<string>('ADMIN_EMAIL_2')!,
     ];
   }
 
   async sendBatchDeletionEmail(
-    deletedProducts: any[],
+    deletedProducts:  CoupangPagingProduct[] | OnchWithCoupangProduct[],
     type: string,
     store: string,
     platformName: string,
   ): Promise<void> {
+
     try {
       const productListHtml = deletedProducts
         .map(
-          (product) =>
-            `<li>상품 ID: ${platformName === 'coupang' ? product.sellerProductId : product.originProductNo}<br>상품명: ${product.productName}<br><br></li>`,
+          (product: CoupangPagingProduct | OnchWithCoupangProduct) =>
+            `<li>상품 ID: ${platformName === 'coupang' ? product.sellerProductId : null}<br>상품명: ${platformName === 'coupang' ? product.sellerProductName : null}<br><br></li>`,
         )
         .join('');
 
