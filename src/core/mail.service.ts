@@ -29,7 +29,7 @@ export class MailService {
   }
 
   async sendBatchDeletionEmail(
-    deletedProducts:  CoupangPagingProduct[] | OnchWithCoupangProduct[],
+    deletedProducts:  CoupangPagingProduct[] | { sellerProductId:string, productName:string }[],
     type: string,
     store: string,
     platformName: string,
@@ -38,8 +38,8 @@ export class MailService {
     try {
       const productListHtml = deletedProducts
         .map(
-          (product: CoupangPagingProduct | OnchWithCoupangProduct) =>
-            `<li>상품 ID: ${platformName === 'coupang' ? product.sellerProductId : null}<br>상품명: ${platformName === 'coupang' ? product.sellerProductName : null}<br><br></li>`,
+          (product: CoupangPagingProduct | { sellerProductId:string, productName:string }) =>
+            `<li>상품 ID: ${platformName === 'coupang' ? product.sellerProductId : null}<br>상품명: ${platformName === 'coupang' ? (product as any).productName : null}<br><br></li>`,
         )
         .join('');
 
