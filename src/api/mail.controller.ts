@@ -16,7 +16,7 @@ export class MailController {
       case 'sendBatchDeletionEmail':
         await this.mailService.sendBatchDeletionEmail(
           payload.deletedProducts,
-          payload.type,
+          payload.jobType,
           payload.store,
           payload.platformName,
         );
@@ -37,14 +37,14 @@ export class MailController {
         break;
 
       case 'sendFailedOrders':
-        await this.mailService.sendFailedOrders(payload.result, payload.store, payload.cronId);
+        await this.mailService.sendFailedOrders(payload.result, payload.store, payload.jobId);
         break;
 
       case 'sendErrorMail':
         await this.mailService.sendErrorMail(
-          payload.cronType,
+          payload.jobType,
           payload.store,
-          payload.cronId,
+          payload.jobId,
           payload.message,
         );
         break;

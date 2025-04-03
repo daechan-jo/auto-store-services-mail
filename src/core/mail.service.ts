@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import {CoupangPagingProduct, CronType, OnchWithCoupangProduct} from "@daechanjo/models";
+import {CoupangPagingProduct, JobType} from "@daechanjo/models";
 
 
 @Injectable()
@@ -30,7 +30,7 @@ export class MailService {
 
   async sendBatchDeletionEmail(
     deletedProducts:  CoupangPagingProduct[] | { sellerProductId:string, productName:string }[],
-    type: string,
+    jobType: string,
     store: string,
     platformName: string,
   ): Promise<void> {
@@ -46,7 +46,7 @@ export class MailService {
       const mailOptions = {
         from: `"Hush-BOT"`,
         to: this.adminEmails,
-        subject: `${type}-${store}(${platformName}) 상품 삭제 알림 - 총 ${deletedProducts.length}개 상품`,
+        subject: `${jobType}-${store}(${platformName}) 상품 삭제 알림 - 총 ${deletedProducts.length}개 상품`,
         html: `
       <h3>상품 삭제 알림</h3>
       <p>아래 상품들이 삭제되었습니다:</p>
@@ -74,7 +74,7 @@ export class MailService {
     const mailOptions = {
       from: `"Hush-BOT"`,
       to: this.adminEmails,
-      subject: `${CronType.PRICE}-${store}-${smartStore} 자동 상품 가격 업데이트 안내`,
+      subject: `${JobType.PRICE}-${store}-${smartStore} 자동 상품 가격 업데이트 안내`,
       html: `
         <h3>상품 업데이트 알림</h3>
         <ul>
@@ -112,7 +112,7 @@ export class MailService {
     const mailOptions = {
       from: `"Hush-BOT"`,
       to: this.adminEmails,
-      subject: `${CronType.ORDER}-${store} 자동 발주 안내`,
+      subject: `${JobType.ORDER}-${store} 자동 발주 안내`,
       html: `
         <h3>발주 알림</h3>
         <ul>
@@ -124,7 +124,7 @@ export class MailService {
     await this.transporter.sendMail(mailOptions);
   }
 
-  async sendFailedOrders(result: any[], store: string, cronId: string) {
+  async sendFailedOrders(result: any[], store: string, jobId: string) {
     const itemsHtml = result
       .map(
         (order) =>
@@ -135,11 +135,11 @@ export class MailService {
     const mailOptions = {
       from: `"Hush-BOT"`,
       to: this.adminEmails,
-      subject: `${CronType.ERROR}${CronType.ORDER}-${store} 자동 발주 실패 안내`,
+      subject: `${JobType.ERROR}${JobType.ORDER}-${store} 자동 발주 실패 안내`,
       html: `
         <h3>발주 실패 알림</h3>
         <ul>
-          작업아이디: ${cronId}
+          작업아이디: ${jobId}
           ${itemsHtml}
         </ul>
       `,
@@ -148,11 +148,11 @@ export class MailService {
     await this.transporter.sendMail(mailOptions);
   }
 
-  async sendErrorMail(cronType: CronType, store: string, cronId: string, message: string) {
+  async sendErrorMail(jobType: JobType, store: string, jobId: string, message: string) {
     const mailOptions = {
       from: `"Hush-BOT"`,
       to: this.adminEmails,
-      subject: `${CronType.ERROR}${cronType}${cronId}-${store} 에러 안내`,
+      subject: `${JobType.ERROR}${jobType}${jobId}-${store} 에러 안내`,
       html: `
         <h3>크론작업 실패 - 확인요망</h3>
         <p>${message}</p>,
@@ -178,7 +178,7 @@ export class MailService {
     const mailOptions = {
       from: `"Hush-BOT"`,
       to: this.adminEmails,
-      subject: `${CronType.SHIPPING}-${store} 운송장 업로드 안내`,
+      subject: `${JobType.SHIPPING}-${store} 운송장 업로드 안내`,
       html: `
         <h3>운송장 업로드 알림</h3>
         <ul>
@@ -201,7 +201,7 @@ export class MailService {
     const mailOptions = {
       from: `"Hush-BOT"`,
       to: this.adminEmails,
-      subject: `${CronType.ERROR}${CronType.SHIPPING}-${store} 운송장 업로드 실패 안내`,
+      subject: `${JobType.ERROR}${JobType.SHIPPING}-${store} 운송장 업로드 실패 안내`,
       html: `
         <h3>운송장 업로드 실패 알림</h3>
         <ul>
