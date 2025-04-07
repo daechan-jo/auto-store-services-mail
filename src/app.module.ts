@@ -15,4 +15,4 @@ import { MailService } from './core/mail.service';
 	controllers: [MailController],
 	providers: [MailService],
 })
-export class MailModule {}
+export class AppModule {}
