@@ -10,54 +10,93 @@ export class MailController {
   @MessagePattern('mail-queue')
   async handleMailMessage(message: any): Promise<void> {
     const { pattern, payload } = message;
-    console.log(`송신 패턴: ${pattern}\npayload: ${payload}`);
+    console.log(`송신 패턴: ${pattern}-${payload.jobId}`);
 
     switch (pattern) {
       case 'sendBatchDeletionEmail':
         await this.mailService.sendBatchDeletionEmail(
-          payload.deletedProducts,
+          payload.jobId,
           payload.jobType,
-          payload.store,
-          payload.platformName,
+          payload.jobName,
+          payload.data,
         );
         break;
 
       case 'sendUpdateEmail':
-        await this.mailService.sendUpdateEmail(
-          payload.filePath,
-          payload.successCount,
-          payload.filedCount,
-          payload.store,
-          payload.smartStore,
+        await this.mailService.sendProductUpdateEmail(
+          payload.jobId,
+          payload.jobType,
+          payload.jobName,
+          payload.data,
         );
         break;
 
       case 'sendSuccessOrders':
-        await this.mailService.sendSuccessOrders(payload.result, payload.store);
+        await this.mailService.sendSuccessOrders(
+          payload.jobId,
+          payload.jobType,
+          payload.jobName,
+          payload.data,
+        );
         break;
 
       case 'sendFailedOrders':
-        await this.mailService.sendFailedOrders(payload.result, payload.store, payload.jobId);
+        await this.mailService.sendFailedOrders(
+          payload.jobId,
+          payload.jobType,
+          payload.jobName,
+          payload.data,
+        );
         break;
 
       case 'sendErrorMail':
         await this.mailService.sendErrorMail(
-          payload.jobType,
-          payload.store,
           payload.jobId,
-          payload.message,
+          payload.jobType,
+          payload.jobName,
+          payload.data,
         );
         break;
 
       case 'sendSuccessInvoiceUpload':
         await this.mailService.sendSuccessInvoiceUpload(
-          payload.successInvoiceUploads,
-          payload.store,
+          payload.jobId,
+          payload.jobType,
+          payload.jobName,
+          payload.data,
         );
         break;
 
       case 'sendFailedInvoiceUpload':
-        await this.mailService.sendFailedInvoiceUpload(payload.failedInvoiceUploads, payload.store);
+        await this.mailService.sendFailedInvoiceUpload(
+          payload.jobId,
+          payload.jobType,
+          payload.jobName,
+          payload.data,
+        );
+        break;
+
+      case 'sendNewNotification':
+        await this.mailService.sendNotificationMail(
+          payload.jobId,
+          payload.jobType,
+          payload.jobName,
+          payload.data,
+        );
+        break;
+      //
+      // case 'sendDailyLimitReached':
+      //   await this.mailService.sendDailyLimitReached(payload.jobId, payload.jobType);
+      //   break;
+
+      case 'sendProductRegistrationSummary':
+        await this.mailService.sendProductRegistrationSummary(
+          payload.jobId,
+          payload.jobType,
+          payload.jobQueueId,
+          payload.jobName,
+          payload.summary,
+        );
         break;
 
       default:
