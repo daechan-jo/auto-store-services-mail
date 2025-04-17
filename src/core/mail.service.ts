@@ -3,7 +3,12 @@ import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { CoupangPagingProduct, JobType, ProductRegistrationSummary } from '@daechanjo/models';
+import {
+  CoupangPagingProduct,
+  InvoiceUploadResult,
+  JobType,
+  ProductRegistrationSummary,
+} from '@daechanjo/models';
 
 @Injectable()
 export class MailService {
@@ -31,7 +36,7 @@ export class MailService {
     jobId: string,
     jobType: string,
     jobName: string,
-    data: CoupangPagingProduct[] | { sellerProductId: string; productName: string }[],
+    data: { sellerProductId: string; productName: string }[],
   ): Promise<void> {
     // 현재 날짜 포맷팅
     const now = new Date();
@@ -191,30 +196,74 @@ export class MailService {
     }
   }
 
-  async sendSuccessOrders(jobId: string, jobType: string, store: string, data: any) {
-    try {
-      const itemsHtml = data
-        .map(
-          (order: any) =>
-            `<li>주문번호: ${order.orderId}<br>주문인: ${order.ordererName}<br>수취인: ${order.receiverName}<br>상품: ${order.sellerProductName}<br>옵션: ${order.sellerProductItemName}<br>수량: ${order.shippingCount}<br><br></li>`,
-        )
-        .join('');
+  async sendSuccessOrders(jobId: string, jobType: string, jobName: string, data: any[]) {
+    // 현재 날짜 포맷팅
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      const mailOptions = {
-        from: `"Hush-BOT"`,
-        to: this.adminEmails,
-        subject: `${jobType}-${jobId} 자동 발주 안내`,
-        html: `
-        <h3>발주 알림</h3>
-        <ul>
-          ${itemsHtml}
-        </ul>
+    // 성공한 발주 정보를 HTML로 변환
+    const itemsHtml = data
+      .map(
+        (order) => `
+        <div style="background: white; border-radius: 6px; padding: 15px; border: 1px solid #e1e1e1; margin-bottom: 10px;">
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>주문번호:</strong> ${order.orderId}</p>
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>주문인:</strong> ${order.ordererName}</p>
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>수취인:</strong> ${order.receiverName}</p>
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>상품:</strong> ${order.sellerProductName}</p>
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>옵션:</strong> ${order.sellerProductItemName}</p>
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>수량:</strong> ${order.shippingCount}</p>
+        </div>
       `,
-      };
+      )
+      .join('');
 
+    const mailOptions = {
+      from: `"Hush-BOT"`,
+      to: this.adminEmails,
+      subject: `${jobType}${jobId} - 자동 발주 성공 안내`,
+      html: `
+    <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 8px; border: 1px solid #e1e1e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #34c759; margin: 0; font-size: 22px; font-weight: 600;">자동 발주 성공 알림</h1>
+        <p style="color: #666; margin: 8px 0 0 0; font-size: 14px;">${formattedDate}</p>
+      </div>
+      
+      <div style="background-color: #f8f8f8; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 6px 0; color: #666; font-size: 14px; width: 100px;">작업 ID:</td>
+            <td style="padding: 6px 0; font-weight: 500; font-size: 14px;">${jobId}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #666; font-size: 14px;">작업 유형:</td>
+            <td style="padding: 6px 0; font-weight: 500; font-size: 14px;">${jobType}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #666; font-size: 14px;">작업 이름:</td>
+            <td style="padding: 6px 0; font-weight: 500; font-size: 14px;">${jobName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #666; font-size: 14px;">성공 건수:</td>
+            <td style="padding: 6px 0; font-weight: 500; font-size: 14px; color: #34c759;">${data.length}건</td>
+          </tr>
+        </table>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0 0 15px 0; font-size: 18px; color: #333; font-weight: 600;">성공 항목 상세 내역</h2>
+        ${itemsHtml}
+      </div>
+      
+      <p style="color: #666; font-size: 12px; text-align: center; margin: 0;">이 메일은 자동으로 발송되었습니다. © ${now.getFullYear()} Hush-BOT</p>
+    </div>
+    `,
+    };
+
+    try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.log(`자동 발주 알림 이메일 발송 실패:`, error);
+      if (error instanceof Error)
+        console.error(`자동 발주 성공 알림 이메일 발송 실패:`, error.message);
     }
   }
 
@@ -301,7 +350,12 @@ export class MailService {
     }
   }
 
-  async sendSuccessInvoiceUpload(jobId: string, jobType: string, jobName: string, data: any[]) {
+  async sendSuccessInvoiceUpload(
+    jobId: string,
+    jobType: string,
+    jobName: string,
+    data: InvoiceUploadResult[],
+  ) {
     // 현재 날짜 포맷팅
     const now = new Date();
     const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -371,7 +425,12 @@ export class MailService {
     }
   }
 
-  async sendFailedInvoiceUpload(jobId: string, jobType: string, jobName: string, data: any[]) {
+  async sendFailedInvoiceUpload(
+    jobId: string,
+    jobType: string,
+    jobName: string,
+    data: InvoiceUploadResult[],
+  ) {
     // 현재 날짜 포맷팅
     const now = new Date();
     const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -443,42 +502,6 @@ export class MailService {
         console.error(`운송장 업로드 실패 알림 메일 발송 실패:`, error.message);
     }
   }
-
-  // async sendNewNotification(jobId: string, jobType: string) {
-  //   const mailOptions = {
-  //     from: `"Hush-BOT"`,
-  //     to: this.adminEmails,
-  //     subject: `${jobType}${jobId}-온채널 신규 메시지 안내`,
-  //     html: `
-  //       <h3>ON채널 요청함 확인 요망</h3>
-  //       <p>확인하지 않은 요청이 있습니다.</p>,
-  //     `,
-  //   };
-  //
-  //   try {
-  //     await this.transporter.sendMail(mailOptions);
-  //   } catch (error) {
-  //     if (error instanceof Error) console.error(`에러 알림 이메일 발송 실패:`, error.message);
-  //   }
-  // }
-
-  // async sendDailyLimitReached(jobId: string, jobType: string) {
-  //   const mailOptions = {
-  //     from: `"Hush-BOT"`,
-  //     to: this.adminEmails,
-  //     subject: `${jobType}${jobId}-일일 상품 등록 요청 제한 안내`,
-  //     html: `
-  //       <h3>쿠팡 상품 등록 불가</h3>
-  //       <p>일일 상품 등록 요청 제한에 도달했습니다. 내일 다시 시도하세요.</p>,
-  //     `,
-  //   };
-  //
-  //   try {
-  //     await this.transporter.sendMail(mailOptions);
-  //   } catch (error) {
-  //     if (error instanceof Error) console.error(`에러 알림 이메일 발송 실패:`, error.message);
-  //   }
-  // }
 
   async sendNotificationMail(
     jobId: string,
@@ -596,7 +619,7 @@ export class MailService {
     jobType: string,
     jobQueueId: string,
     jobName: string,
-    summary: ProductRegistrationSummary,
+    data: ProductRegistrationSummary,
   ) {
     // 현재 날짜 포맷팅
     const now = new Date();
@@ -638,19 +661,19 @@ export class MailService {
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
             <div style="background: white; border-radius: 6px; padding: 15px; border: 1px solid #e1e1e1;">
               <p style="margin: 0 0 5px 0; font-size: 13px; color: #666;">성공</p>
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(summary.successCount)}">${summary.successCount}</p>
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(data.successCount)}">${data.successCount}</p>
             </div>
             <div style="background: white; border-radius: 6px; padding: 15px; border: 1px solid #e1e1e1;">
               <p style="margin: 0 0 5px 0; font-size: 13px; color: #666;">실패</p>
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(summary.failCount)}">${summary.failCount}</p>
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(data.failCount)}">${data.failCount}</p>
             </div>
             <div style="background: white; border-radius: 6px; padding: 15px; border: 1px solid #e1e1e1;">
               <p style="margin: 0 0 5px 0; font-size: 13px; color: #666;">이미 등록됨</p>
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(summary.alreadyRegisteredCount)}">${summary.alreadyRegisteredCount}</p>
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(data.alreadyRegisteredCount)}">${data.alreadyRegisteredCount}</p>
             </div>
             <div style="background: white; border-radius: 6px; padding: 15px; border: 1px solid #e1e1e1;">
               <p style="margin: 0 0 5px 0; font-size: 13px; color: #666;">중복 이름</p>
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(summary.duplicateNameCount)}">${summary.duplicateNameCount}</p>
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${getColorForCount(data.duplicateNameCount)}">${data.duplicateNameCount}</p>
             </div>
           </div>
         </div>
@@ -658,11 +681,11 @@ export class MailService {
         <div style="background: white; border-radius: 6px; padding: 15px; border: 1px solid #e1e1e1; margin-bottom: 15px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <p style="margin: 0; font-size: 15px; font-weight: 600; color: #333;">총 처리 아이템</p>
-            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #333;">${summary.totalProcessed}</p>
+            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #333;">${data.totalProcessed}</p>
           </div>
           <div style="display: flex; justify-content: space-between;">
             <p style="margin: 0; font-size: 15px; font-weight: 600; color: #333;">실패한 페이지</p>
-            <p style="margin: 0; font-size: 15px; font-weight: 600; color: ${summary.failedPage > 0 ? '#ff3b30' : '#8e8e93'}">${summary.failedPage > 0 ? summary.failedPage : '없음'}</p>
+            <p style="margin: 0; font-size: 15px; font-weight: 600; color: ${data.failedPage > 0 ? '#ff3b30' : '#8e8e93'}">${data.failedPage > 0 ? data.failedPage : '없음'}</p>
           </div>
         </div>
         

@@ -76,7 +76,7 @@ export class MailController {
         );
         break;
 
-      case 'sendNewNotification':
+      case 'sendNotification':
         await this.mailService.sendNotificationMail(
           payload.jobId,
           payload.jobType,
@@ -84,10 +84,6 @@ export class MailController {
           payload.data,
         );
         break;
-      //
-      // case 'sendDailyLimitReached':
-      //   await this.mailService.sendDailyLimitReached(payload.jobId, payload.jobType);
-      //   break;
 
       case 'sendProductRegistrationSummary':
         await this.mailService.sendProductRegistrationSummary(
@@ -95,7 +91,7 @@ export class MailController {
           payload.jobType,
           payload.jobQueueId,
           payload.jobName,
-          payload.summary,
+          payload.data,
         );
         break;
 
