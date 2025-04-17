@@ -1,4 +1,4 @@
-name: Build and Deploy mail-service
+name: Build and Deploy Mail-Service
 
 on:
   push:
