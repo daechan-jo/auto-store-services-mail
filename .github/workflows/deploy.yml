@@ -1,4 +1,4 @@
-name: Build and Deploy API Gateway
+name: Build and Deploy mail-service
 
 on:
   push:
@@ -20,15 +20,15 @@ jobs:
       - name: Build Docker image
         run: |
           # 고유한 태그 사용 (최신 커밋 해시)
-          docker build -t mail:${{ github.sha }} .
+          docker build -t mail-service:${{ github.sha }} .
 
       - name: Update Kubernetes deployment
         run: |
           # 새 이미지로 디플로이먼트 업데이트
-          kubectl set image deployment/mail mail=mail:${{ github.sha }}
+          kubectl set image deployment/mail-service mail-service=mail-service:${{ github.sha }}
           
           # 롤링 업데이트 전략 수정 (1개의 레플리카로도 업데이트가 가능하게)
-          kubectl patch deployment mail -p '{"spec":{"strategy":{"rollingUpdate":{"maxSurge":1,"maxUnavailable":0}}}}'
+          kubectl patch deployment mail-service -p '{"spec":{"strategy":{"rollingUpdate":{"maxSurge":1,"maxUnavailable":0}}}}'
           
           # 디플로이먼트 상태 확인 (타임아웃 설정)
-          kubectl rollout status deployment/mail --timeout=180s
+          kubectl rollout status deployment/mail-service --timeout=180s
