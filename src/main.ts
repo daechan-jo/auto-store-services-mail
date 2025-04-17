@@ -25,7 +25,7 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
-      urls: [isDev ? String(process.env.RABBITMQ_URL) : String(process.env.K8S_RABBITMQ_URL)],
+      urls: [String(process.env.RABBITMQ_URL)],
       queue: 'mail-queue',
       queueOptions: { durable: false },
     },
