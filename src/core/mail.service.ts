@@ -7,6 +7,7 @@ import {
   CoupangPagingProduct,
   InvoiceUploadResult,
   JobType,
+  OrderResult,
   ProductRegistrationSummary,
 } from '@daechanjo/models';
 
@@ -196,7 +197,7 @@ export class MailService {
     }
   }
 
-  async sendSuccessOrders(jobId: string, jobType: string, jobName: string, data: any[]) {
+  async sendSuccessOrders(jobId: string, jobType: string, jobName: string, data: OrderResult[]) {
     // 현재 날짜 포맷팅
     const now = new Date();
     const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -267,13 +268,7 @@ export class MailService {
     }
   }
 
-  async sendFailedOrders(
-    jobId: string,
-    jobType: string,
-    jobName: string, // store 대신 jobName으로 변경
-    data: any[],
-  ) {
-    // 현재 날짜 포맷팅
+  async sendFailedOrders(jobId: string, jobType: string, jobName: string, data: OrderResult[]) {
     const now = new Date();
     const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -285,12 +280,12 @@ export class MailService {
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>주문번호:</strong> ${order.orderId}</p>
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>주문인:</strong> ${order.ordererName}</p>
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>수취인:</strong> ${order.receiverName}</p>
-          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>상품코드:</strong> ${order.productCode}</p>
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>상품코드:</strong> ${order.sellerProductName.split(' ')[0]}</p>
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>상품:</strong> ${order.sellerProductName}</p>
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>옵션:</strong> ${order.sellerProductItemName}</p>
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>수량:</strong> ${order.shippingCount}</p>
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>안전번호:</strong> ${order.safeNumber}</p>
-          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>우편번호:</strong> ${order.postNumber}</p>
+          <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>우편번호:</strong> ${order.postCode}</p>
           <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>주소:</strong> ${order.fullAddress}</p>
           <div style="background: #f8f8f8; border-radius: 4px; padding: 10px; margin-top: 8px;">
             <pre style="margin: 0; font-size: 12px; color: #ff3b30; font-family: monospace; white-space: pre-wrap;">${JSON.stringify(order.error, null, 2)}</pre>

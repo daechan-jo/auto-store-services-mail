@@ -20,7 +20,7 @@
 	},
 	"dependencies": {
 		"@daechanjo/log": "^1.0.5",
-		"@daechanjo/models": "^1.0.68",
+		"@daechanjo/models": "^1.0.71",
 		"@daechanjo/rabbitmq": "^2.0.1",
 		"@daechanjo/rabbitmq-utils": "^1.0.10",
 		"@eslint/eslintrc": "^3.3.0",
